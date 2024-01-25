@@ -24,6 +24,8 @@ export class ScheduleService {
   ) {}
 
   public async getSchedule(dto: GetScheduleDto) {
+    await this.ensureScheduleExists(dto.id)
+
     return this.scheduleModel.findById(dto.id)
   }
 
@@ -31,7 +33,7 @@ export class ScheduleService {
     return this.scheduleModel.find()
   }
   public async createSchedule(dto: PostScheduleDto) {
-    await this.ensureRoomExists(dto.room_id)
+    await this.roomService.ensureRoomExists(dto.room_id)
     await this.ensureScheduleDoesNotExist(dto.room_id)
 
     return this.scheduleModel.create(dto)
@@ -45,7 +47,7 @@ export class ScheduleService {
   }
 
   public async patchSchedule(dto: PatchScheduleDto) {
-    await this.ensureRoomExists(dto.room_id)
+    await this.roomService.ensureRoomExists(dto.room_id)
     await this.ensureScheduleDoesExist(dto.id)
 
     return this.scheduleModel.findByIdAndUpdate(
@@ -76,10 +78,10 @@ export class ScheduleService {
     }
   }
 
-  private async ensureRoomExists(roomId: string) {
-    const roomExists = await this.roomService.searchRoomById(roomId)
+  private async ensureScheduleExists(scheduleId: string) {
+    const roomExists = await this.searchScheduleById(scheduleId)
     if (!roomExists) {
-      throw new NotFoundException('Room not found.')
+      throw new NotFoundException('Schedule not found.')
     }
   }
 }

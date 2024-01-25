@@ -104,7 +104,7 @@ export class RoomService {
     return !!existingEntry
   }
 
-  private async ensureRoomExists(roomId: string) {
+  public async ensureRoomExists(roomId: string) {
     const roomExists = await this.searchRoomById(roomId)
     if (!roomExists) {
       throw new NotFoundException('Room not found.')

@@ -1,4 +1,4 @@
-enum RoomTypes {
+export enum RoomTypes {
   OneRoom = 'Одна комната',
   TwoRooms = 'Две комнаты',
   ThreeRooms = 'Три комнаты',
