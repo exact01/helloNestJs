@@ -14,6 +14,7 @@ import {
 } from './dtos'
 import { Room, RoomDocument } from '../room/models'
 import { RoomService } from '../room/room.service'
+import { SCHEDULE_CONSTANTS } from './constants'
 
 @Injectable()
 export class ScheduleService {
@@ -43,7 +44,7 @@ export class ScheduleService {
     await this.ensureScheduleDoesExist(dto.id)
     await this.scheduleModel.deleteOne({ _id: dto.id })
 
-    return { message: 'Schedule deleted successfully.' }
+    return { message: SCHEDULE_CONSTANTS.SCHEDULE_DELETED }
   }
 
   public async patchSchedule(dto: PatchScheduleDto) {
@@ -67,21 +68,21 @@ export class ScheduleService {
   private async ensureScheduleDoesExist(id: string) {
     const scheduleExists = await this.searchScheduleById(id)
     if (!scheduleExists) {
-      throw new NotFoundException(`Schedule with ID ${id} not found.`)
+      throw new NotFoundException(SCHEDULE_CONSTANTS.SCHEDULE_NOT_FOUND)
     }
   }
 
   private async ensureScheduleDoesNotExist(roomId: string) {
     const scheduleExists = await this.searchScheduleById(roomId)
     if (scheduleExists) {
-      throw new ConflictException('Schedule already exists.')
+      throw new ConflictException(SCHEDULE_CONSTANTS.SCHEDULE_EXISTS)
     }
   }
 
   private async ensureScheduleExists(scheduleId: string) {
     const roomExists = await this.searchScheduleById(scheduleId)
     if (!roomExists) {
-      throw new NotFoundException('Schedule not found.')
+      throw new NotFoundException(SCHEDULE_CONSTANTS.SCHEDULE_NOT_FOUND)
     }
   }
 }

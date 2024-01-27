@@ -6,44 +6,48 @@ import {
   HttpCode,
   Post,
   Patch,
-  Param
+  Param,
+  UsePipes,
+  ValidationPipe
 } from '@nestjs/common'
+
 import {
   GetCurrentPageRoomDto,
   GetCurrentRoomDto,
   PatchRoomDto,
-  RoomDto
+  PostRoomDto
 } from './dtos'
+
 import { RoomService } from './room.service'
 
 @Controller('room')
 export class RoomController {
   constructor(private roomService: RoomService) {}
-  @Get('/:page')
+  @UsePipes(new ValidationPipe())
+  @Get('/:id')
   public async getRooms(@Param() dto: GetCurrentPageRoomDto) {
-    // TODO VALIDATOR page !== 0
-    if (Number(dto.page) === 0) {
-      return []
-    }
-    return this.roomService.getRooms(Number(dto.page))
+    return this.roomService.getRooms(Number(dto.id))
   }
 
+  @UsePipes(new ValidationPipe())
   @Get('/current/:id')
   public async getCurrentRoom(@Param() dto: GetCurrentRoomDto) {
     return this.roomService.getCurrentRoom(dto)
   }
 
+  @UsePipes(new ValidationPipe())
   @HttpCode(201)
   @Post()
-  public async createRoom(@Body() dto: RoomDto) {
+  public async createRoom(@Body() dto: PostRoomDto) {
     return this.roomService.createRoom(dto)
   }
-
+  @UsePipes(new ValidationPipe())
   @Patch()
   public async patchRoom(@Body() dto: PatchRoomDto) {
     return this.roomService.patchRoom(dto)
   }
 
+  @UsePipes(new ValidationPipe())
   @Delete()
   public async deleteRoom(@Body() dto: GetCurrentRoomDto) {
     return this.roomService.deleteRoom(dto)

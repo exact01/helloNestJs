@@ -7,9 +7,10 @@ import {
 import { InjectModel } from '@nestjs/mongoose'
 import { Room, RoomDocument } from './models'
 import { Model, Types } from 'mongoose'
-import { RoomDto, PatchRoomDto, GetCurrentRoomDto } from './dtos'
+import { PostRoomDto, PatchRoomDto, GetCurrentRoomDto } from './dtos'
 import { Schedule, ScheduleDocument } from '../schedule/models'
 import { IRoomWithScheduleStatus } from './interfaces'
+import { ROOM_CONSTANTS } from './constants'
 
 @Injectable()
 export class RoomService {
@@ -49,12 +50,11 @@ export class RoomService {
     const { id } = room
     await this.ensureRoomExists(id)
     await this.roomModel.deleteOne({ _id: id })
-    // TODO ON CASCADE MONGO
     await this.scheduleModel.deleteMany({ room_id: id })
-    return { message: 'Room deleted successfully.' }
+    return { message: ROOM_CONSTANTS.ROOM_DELETED }
   }
 
-  public async createRoom(room: RoomDto): Promise<IRoomWithScheduleStatus> {
+  public async createRoom(room: PostRoomDto): Promise<IRoomWithScheduleStatus> {
     await this.ensureRoomDoesNotExist(room.room_number)
 
     const newRoom = await this.roomModel.create({ ...room })
@@ -107,14 +107,14 @@ export class RoomService {
   public async ensureRoomExists(roomId: string) {
     const roomExists = await this.searchRoomById(roomId)
     if (!roomExists) {
-      throw new NotFoundException('Room not found.')
+      throw new NotFoundException(ROOM_CONSTANTS.ROOM_NOT_FOUND)
     }
   }
 
   private async ensureRoomDoesNotExist(roomNumber: number) {
     const roomExists = await this.searchRoomByNumberRoom(roomNumber)
     if (roomExists) {
-      throw new ConflictException('Room already exists.')
+      throw new ConflictException(ROOM_CONSTANTS.ROOM_EXISTS)
     }
   }
 }
