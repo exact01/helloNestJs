@@ -24,9 +24,9 @@ import { RoomService } from './room.service'
 export class RoomController {
   constructor(private roomService: RoomService) {}
   @UsePipes(new ValidationPipe())
-  @Get('/:id')
+  @Get('/:page')
   public async getRooms(@Param() dto: GetCurrentPageRoomDto) {
-    return this.roomService.getRooms(Number(dto.id))
+    return this.roomService.getRooms(Number(dto.page))
   }
 
   @UsePipes(new ValidationPipe())

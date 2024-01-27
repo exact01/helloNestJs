@@ -1,3 +1,7 @@
-import { GetCurrentRoomDto } from './getCurrentRoom.dto'
+import { IsString, MinLength } from 'class-validator'
 
-export class GetCurrentPageRoomDto extends GetCurrentRoomDto {}
+export class GetCurrentPageRoomDto {
+  @IsString()
+  @MinLength(1)
+  readonly page: string
+}
