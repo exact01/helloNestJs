@@ -1,28 +1,33 @@
-import { Injectable } from '@nestjs/common'
-
-// TODO
-export interface User {
-  userId: number
-  username: string
-  password: string
-}
+import { Injectable, UnauthorizedException } from '@nestjs/common'
+import { AUTH_CONSTANTS } from '../auth/constants'
+import { compare } from 'bcryptjs'
+import { InjectModel } from '@nestjs/mongoose'
+import { Model } from 'mongoose'
+import { UserDocument, User } from './models'
 
 @Injectable()
 export class UsersService {
-  private readonly users: User[] = [
-    {
-      userId: 1,
-      username: 'john',
-      password: 'changeme'
-    },
-    {
-      userId: 2,
-      username: 'maria',
-      password: 'guess'
-    }
-  ]
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  public async findUser(email: string): Promise<User> {
+    return this.userModel.findOne({ email })
+  }
 
-  async findOne(username: string): Promise<User | undefined> {
-    return this.users.find((user) => user.username === username)
+  public async validateUser(
+    email: string,
+    password: string
+  ): Promise<Pick<User, 'email'>> {
+    const user = await this.findUser(email)
+    if (!user) {
+      throw new UnauthorizedException(AUTH_CONSTANTS.USER_NOT_FOUND)
+    }
+
+    const isCorrectPassword = await compare(password, user.hashPassword)
+    if (!isCorrectPassword) {
+      throw new UnauthorizedException(AUTH_CONSTANTS.USER_WRONG_PASSWORD)
+    }
+
+    return {
+      email: user.email
+    }
   }
 }

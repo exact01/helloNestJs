@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common'
-import { AuthController } from './auth/auth.controller'
 import { ConfigModule } from '@nestjs/config'
 import { MongooseModule } from '@nestjs/mongoose'
 import { ScheduleModule } from './schedule/schedule.module'
 import { RoomModule } from './room/room.module'
-import { UsersModule } from './users/users.module'
-import { AuthService } from './auth/auth.service'
 import { MongooseConfigService } from './configs/mongooseConfig/mongooseConfig.service'
+import { AuthModule } from './auth/auth.module'
 
 @Module({
   imports: [
@@ -15,7 +13,8 @@ import { MongooseConfigService } from './configs/mongooseConfig/mongooseConfig.s
       useClass: MongooseConfigService
     }),
     ScheduleModule,
-    RoomModule
+    RoomModule,
+    AuthModule
   ],
   controllers: [],
   providers: []

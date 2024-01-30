@@ -1,3 +1,3 @@
-import { AuthDto } from './auth.dto'
+import { RegisterDto } from './registerDto'
 
-export { AuthDto }
+export { RegisterDto }
