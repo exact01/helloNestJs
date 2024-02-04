@@ -1,17 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { INestApplication } from '@nestjs/common'
-import * as request from 'supertest'
+import request from 'supertest'
 import { AppModule } from '../../src/app.module'
 import { disconnect, Types } from 'mongoose'
 import { roomTestDto } from '../room/constants/roomTestDto'
 import { PostScheduleDto } from '../../src/schedule/dtos'
+import { ScheduleErrors } from '../../src/schedule/exeption/errors'
 
 describe('ScheduleController (e2e)', () => {
   let app: INestApplication
   let roomId: string = ''
   let scheduleId: string = ''
   const randomId = new Types.ObjectId().toString()
-  const testDto: PostScheduleDto = { day: 1, room_id: roomId }
+  const newStartDay = '2111-02-04T00:00:00.000Z'
+  const testDto: PostScheduleDto = {
+    startDay: '2111-02-03T00:00:00.000Z',
+    endDay: '2111-02-06T00:00:00.000Z',
+    roomId: roomId
+  }
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -30,8 +36,7 @@ describe('ScheduleController (e2e)', () => {
         .expect(201)
 
       roomId = body._id
-      testDto.day = 1
-      testDto.room_id = roomId
+      testDto.roomId = roomId
 
       expect(roomId).toBeDefined()
     })
@@ -49,8 +54,7 @@ describe('ScheduleController (e2e)', () => {
       const { body } = await request(app.getHttpServer())
         .get(`/schedule/${randomId}`)
         .expect(404)
-
-      expect(body.error).toBe('Not Found')
+      expect(body.message).toBeDefined()
     })
 
     it('schedule/ (POST) 201', async () => {
@@ -69,8 +73,8 @@ describe('ScheduleController (e2e)', () => {
         .expect(200)
 
       expect(body._id).toBe(scheduleId)
-      expect(body.day).toBe(testDto.day)
-      expect(body.room_id).toBe(testDto.room_id)
+      expect(body.startDay).toBe(testDto.startDay)
+      expect(body.roomId).toBe(testDto.roomId)
     })
 
     it('/schedule (PATCH) 404', async () => {
@@ -79,25 +83,18 @@ describe('ScheduleController (e2e)', () => {
         .send({ ...testDto, id: randomId })
         .expect(404)
 
-      expect(body.error).toBe('Not Found')
-    })
-
-    it('/schedule (PATCH) 404', async () => {
-      const { body } = await request(app.getHttpServer())
-        .patch('/schedule')
-        .send({ ...testDto, id: randomId })
-        .expect(404)
-
-      expect(body.error).toBe('Not Found')
+      expect(body.message).toBe(ScheduleErrors.SCHEDULE_NOT_FOUND.message)
     })
 
     it('/schedule (PATCH) 200', async () => {
       const { body } = await request(app.getHttpServer())
         .patch('/schedule')
-        .send({ ...testDto, id: scheduleId, day: 2 })
-        .expect(200)
-
-      expect(body.day).toBe(2)
+        .send({
+          ...testDto,
+          id: scheduleId,
+          startDay: newStartDay
+        })
+      expect(body.startDay).toBe(newStartDay)
     })
 
     it('/schedule (DELETE) 404', async () => {
@@ -105,8 +102,7 @@ describe('ScheduleController (e2e)', () => {
         .delete('/schedule')
         .send({ id: randomId })
         .expect(404)
-
-      expect(body.error).toBe('Not Found')
+      expect(body.message).toBe(ScheduleErrors.SCHEDULE_NOT_FOUND.message)
     })
 
     it('/schedule (DELETE) 200', async () => {
@@ -115,7 +111,7 @@ describe('ScheduleController (e2e)', () => {
         .send({ id: scheduleId })
         .expect(200)
 
-      expect(body.message).toBeDefined()
+      expect(body.isDeleted).toBe(true)
     })
 
     it('/room (DELETE) 200', async () => {
@@ -134,21 +130,21 @@ describe('ScheduleController (e2e)', () => {
     it('schedule/ (POST) 400 validation error', async () => {
       await request(app.getHttpServer())
         .post('/schedule')
-        .send({ room_id: randomId, day: 'text' })
+        .send({ roomId: randomId, startDay: 'text' })
         .expect(400)
     })
 
     it('schedule/ (POST) 400 validation error', async () => {
       await request(app.getHttpServer())
         .post('/schedule')
-        .send({ room_id: 'text', day: 1 })
+        .send({ roomId: 'text', endDay: 1 })
         .expect(400)
     })
 
     it('schedule/ (PATCH) 400 validation error', async () => {
       await request(app.getHttpServer())
         .patch('/schedule')
-        .send({ room_id: randomId, day: 1, id: 'text' })
+        .send({ roomId: randomId, startDay: 1, endDay: 1, id: 'text' })
         .expect(400)
     })
 

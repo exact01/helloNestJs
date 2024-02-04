@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  UseFilters,
   UsePipes,
   ValidationPipe
 } from '@nestjs/common'
@@ -17,7 +18,10 @@ import {
   PostScheduleDto
 } from './dtos'
 import { ScheduleService } from './schedule.service'
+import { ScheduleExceptionFilter } from './exeption/shcedule.exption.filter'
+import { RoomExceptionFilter } from '../room/exception'
 
+@UseFilters(RoomExceptionFilter, ScheduleExceptionFilter)
 @Controller('schedule')
 export class ScheduleController {
   constructor(private scheduleService: ScheduleService) {}
@@ -25,12 +29,12 @@ export class ScheduleController {
   @UsePipes(new ValidationPipe())
   @Get('/:id')
   public async getSchedule(@Param() dto: GetScheduleDto) {
-    return this.scheduleService.getSchedule(dto)
+    return this.scheduleService.getScheduleById(dto)
   }
 
   @Get()
-  public async getAllSchedule() {
-    return this.scheduleService.getAllSchedule()
+  public async getSchedules() {
+    return this.scheduleService.getSchedules()
   }
 
   @UsePipes(new ValidationPipe())

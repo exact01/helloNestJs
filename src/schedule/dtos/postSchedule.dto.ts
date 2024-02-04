@@ -1,20 +1,25 @@
 import {
-  IsNumber,
   IsString,
-  Max,
+  IsNotEmpty,
+  MinLength,
   MaxLength,
-  Min,
-  MinLength
+  IsISO8601
 } from 'class-validator'
 
 export class PostScheduleDto {
   @IsString()
+  @IsNotEmpty()
   @MinLength(24)
   @MaxLength(24)
-  room_id: string
+  roomId: string
 
-  @IsNumber()
-  @Min(1)
-  @Max(31)
-  day: number
+  @IsNotEmpty()
+  @IsISO8601()
+  @IsString()
+  startDay: string
+
+  @IsNotEmpty()
+  @IsISO8601()
+  @IsString()
+  endDay: string
 }

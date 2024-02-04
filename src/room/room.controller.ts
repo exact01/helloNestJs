@@ -8,7 +8,8 @@ import {
   Patch,
   Param,
   UsePipes,
-  ValidationPipe
+  ValidationPipe,
+  UseFilters
 } from '@nestjs/common'
 
 import {
@@ -19,14 +20,16 @@ import {
 } from './dtos'
 
 import { RoomService } from './room.service'
+import { RoomExceptionFilter } from './exception'
 
+@UseFilters(RoomExceptionFilter)
 @Controller('room')
 export class RoomController {
   constructor(private roomService: RoomService) {}
   @UsePipes(new ValidationPipe())
   @Get('/:page')
   public async getRooms(@Param() dto: GetCurrentPageRoomDto) {
-    return this.roomService.getRooms(Number(dto.page))
+    return this.roomService.getRooms(dto)
   }
 
   @UsePipes(new ValidationPipe())

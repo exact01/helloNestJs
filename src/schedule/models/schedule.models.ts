@@ -7,11 +7,14 @@ export type ScheduleDocument = HydratedDocument<Schedule>
 
 @Schema({ versionKey: false })
 export class Schedule {
-  @Prop({ required: true, min: 1, max: 31 })
-  day: number
+  @Prop({ required: true, type: Date })
+  startDay: Date
 
-  @Prop({ type: Types.ObjectId, ref: Room.name })
-  room_id: Room
+  @Prop({ required: true, type: Date })
+  endDay: Date
+
+  @Prop({ required: true, type: Types.ObjectId, ref: Room.name })
+  roomId: Room
 }
 
 export const ScheduleSchema = SchemaFactory.createForClass(Schedule)

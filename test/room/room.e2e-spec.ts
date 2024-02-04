@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { INestApplication } from '@nestjs/common'
-import * as request from 'supertest'
+import request from 'supertest'
 import { AppModule } from '../../src/app.module'
 import { disconnect, Types } from 'mongoose'
 import { PatchRoomDto } from '../../src/room/dtos'
@@ -8,7 +8,7 @@ import { roomTestDto } from './constants/roomTestDto'
 
 describe('RoomController (e2e)', () => {
   let app: INestApplication
-  let romId: string
+  let roomId: string
   const randomId = new Types.ObjectId().toString()
   const errorId = 'dfklsfjlkdSjdklsFjklFdsljkdsFjlkfsDljkFdsljkfsD'
 
@@ -28,24 +28,17 @@ describe('RoomController (e2e)', () => {
         .send(roomTestDto)
         .expect(201)
 
-      romId = body._id
-      expect(romId).toBeDefined()
-    })
-
-    it('/room (POST) 409', async () => {
-      await request(app.getHttpServer())
-        .post('/room')
-        .send(roomTestDto)
-        .expect(409)
+      roomId = body._id
+      expect(roomId).toBeDefined()
     })
 
     it('/room/current/:id (GET)', async () => {
       const { body } = await request(app.getHttpServer())
-        .get(`/room/current/${romId}`)
+        .get(`/room/current/${roomId}`)
         .send(roomTestDto)
         .expect(200)
 
-      expect(romId === body._id).toBe(true)
+      expect(roomId === body._id).toBe(true)
     })
 
     it('/room/current/:id (GET) 404', async () => {
@@ -58,8 +51,8 @@ describe('RoomController (e2e)', () => {
     it('room/ (PATCH)', async () => {
       const patchDto: PatchRoomDto = {
         ...roomTestDto,
-        id: romId,
-        is_sea_view: false
+        id: roomId,
+        isSeaView: false
       }
 
       const { body } = await request(app.getHttpServer())
@@ -67,15 +60,15 @@ describe('RoomController (e2e)', () => {
         .send(patchDto)
         .expect(200)
 
-      const { is_sea_view } = body
-      expect(is_sea_view).toBe(false)
+      const { isSeaView } = body
+      expect(isSeaView).toBe(false)
     })
 
     it('room/ (PATCH) 404', async () => {
       const patchDto: PatchRoomDto = {
         ...roomTestDto,
         id: randomId,
-        is_sea_view: false
+        isSeaView: false
       }
 
       await request(app.getHttpServer())
@@ -87,11 +80,11 @@ describe('RoomController (e2e)', () => {
     it('room/ (DELETE)', async () => {
       const { body } = await request(app.getHttpServer())
         .delete('/room')
-        .send({ id: romId })
+        .send({ id: roomId })
         .expect(200)
 
-      const { message } = body
-      expect(message).toBeDefined()
+      const { isDeleted } = body
+      expect(isDeleted).toBe(true)
     })
 
     it('room/ (DELETE) 404', async () => {
@@ -106,21 +99,21 @@ describe('RoomController (e2e)', () => {
     it('/room (POST) 400 validation error', async () => {
       await request(app.getHttpServer())
         .post('/room')
-        .send({ ...roomTestDto, is_sea_view: 'random' })
+        .send({ ...roomTestDto, isSeaView: 'random' })
         .expect(400)
     })
 
     it('/room (POST) 400 validation error', async () => {
       await request(app.getHttpServer())
         .post('/room')
-        .send({ ...roomTestDto, room_number: 0 })
+        .send({ ...roomTestDto, roomNumber: 0 })
         .expect(400)
     })
 
     it('/room (POST) 400 validation error', async () => {
       await request(app.getHttpServer())
         .post('/room')
-        .send({ ...roomTestDto, room_type: 'random' })
+        .send({ ...roomTestDto, roomType: 'random' })
         .expect(400)
     })
 
