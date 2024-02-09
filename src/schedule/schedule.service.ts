@@ -1,88 +1,98 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException
-} from '@nestjs/common'
-import { InjectModel } from '@nestjs/mongoose'
-import { Schedule, ScheduleDocument } from './models'
-import { Model } from 'mongoose'
-import {
-  DeleteScheduleDto,
-  GetScheduleDto,
-  PatchScheduleDto,
-  PostScheduleDto
-} from './dtos'
-import { Room, RoomDocument } from '../room/models'
-import { RoomService } from '../room/room.service'
-import { SCHEDULE_CONSTANTS } from './constants'
+import { Injectable, UseFilters } from '@nestjs/common'
 
+import {
+  ICreateSchedule,
+  IDeleteSchedule,
+  IGetSchedule,
+  IPatchSchedule
+} from './interfeces/service'
+import { ScheduleExceptionFilter } from './exeption/shcedule.exption.filter'
+import { ScheduleRepository } from './schedule.repository'
+import { ScheduleException } from './exeption'
+import { ScheduleErrors } from './exeption/errors'
+import moment from 'moment-timezone'
+import { RoomService } from '../room/room.service'
+
+@UseFilters(ScheduleExceptionFilter)
 @Injectable()
 export class ScheduleService {
   constructor(
-    @InjectModel(Room.name) private roomModel: Model<RoomDocument>,
-    @InjectModel(Schedule.name) private scheduleModel: Model<ScheduleDocument>,
-    private roomService: RoomService
+    private readonly scheduleRepository: ScheduleRepository,
+    private readonly roomService: RoomService
   ) {}
 
-  public async getSchedule(dto: GetScheduleDto) {
-    await this.ensureScheduleExists(dto.id)
-
-    return this.scheduleModel.findById(dto.id)
+  public async getScheduleById({ id }: IGetSchedule) {
+    return this.searchScheduleById(id)
   }
 
-  public async getAllSchedule() {
-    return this.scheduleModel.find()
-  }
-  public async createSchedule(dto: PostScheduleDto) {
-    await this.roomService.ensureRoomExists(dto.room_id)
-    await this.ensureScheduleDoesNotExist(dto.room_id)
-
-    return this.scheduleModel.create(dto)
+  public async getSchedules() {
+    return this.scheduleRepository.getSchedule()
   }
 
-  public async deleteSchedule(dto: DeleteScheduleDto) {
-    await this.ensureScheduleDoesExist(dto.id)
-    await this.scheduleModel.deleteOne({ _id: dto.id })
+  public async createSchedule({ startDay, endDay, roomId }: ICreateSchedule) {
+    await this.roomService.ensureRoomExists(roomId)
 
-    return { message: SCHEDULE_CONSTANTS.SCHEDULE_DELETED }
-  }
-
-  public async patchSchedule(dto: PatchScheduleDto) {
-    await this.roomService.ensureRoomExists(dto.room_id)
-    await this.ensureScheduleDoesExist(dto.id)
-
-    return this.scheduleModel.findByIdAndUpdate(
-      { _id: dto.id },
-      { $set: { day: dto.day } },
-      { new: true }
-    )
-  }
-
-  private async searchScheduleById(id: string): Promise<boolean> {
-    const findSchedule = await this.scheduleModel.findOne({
-      _id: id
+    const { startMomentDay, endMomentDay } = await this.ensureGoodTime({
+      id: roomId,
+      endDay,
+      startDay
     })
-    return !!findSchedule
+
+    return this.scheduleRepository.createSchedule({
+      startDay: startMomentDay.toString(),
+      endDay: endMomentDay.toString(),
+      roomId
+    })
   }
 
-  private async ensureScheduleDoesExist(id: string) {
-    const scheduleExists = await this.searchScheduleById(id)
-    if (!scheduleExists) {
-      throw new NotFoundException(SCHEDULE_CONSTANTS.SCHEDULE_NOT_FOUND)
-    }
+  public async deleteSchedule({ id }: IDeleteSchedule) {
+    const scheduleDb = await this.searchScheduleById(id)
+    await scheduleDb.deleteOne()
+    return { isDeleted: true }
   }
 
-  private async ensureScheduleDoesNotExist(roomId: string) {
-    const scheduleExists = await this.searchScheduleById(roomId)
-    if (scheduleExists) {
-      throw new ConflictException(SCHEDULE_CONSTANTS.SCHEDULE_EXISTS)
-    }
+  public async patchSchedule({ id, startDay, endDay }: IPatchSchedule) {
+    await this.searchScheduleById(id)
+
+    const { startMomentDay, endMomentDay } = await this.ensureGoodTime({
+      id,
+      endDay,
+      startDay
+    })
+
+    return this.scheduleRepository.patchSchedule({
+      id,
+      startDay: startMomentDay.toISOString(),
+      endDay: endMomentDay.toISOString()
+    })
   }
 
-  private async ensureScheduleExists(scheduleId: string) {
-    const roomExists = await this.searchScheduleById(scheduleId)
-    if (!roomExists) {
-      throw new NotFoundException(SCHEDULE_CONSTANTS.SCHEDULE_NOT_FOUND)
+  private async searchScheduleById(id: string) {
+    const schedule = await this.scheduleRepository.getByScheduleId(id)
+    if (!schedule) {
+      throw new ScheduleException(ScheduleErrors.SCHEDULE_NOT_FOUND.code)
     }
+    return schedule
+  }
+
+  private async ensureGoodTime({ id, startDay, endDay }: IPatchSchedule) {
+    const startMomentDay = moment.utc(startDay).startOf('day')
+    const endMomentDay = moment.utc(endDay).startOf('day')
+
+    if (startMomentDay.isAfter(endMomentDay)) {
+      throw new ScheduleException(ScheduleErrors.SCHEDULE_VALIDATION_DAY.code)
+    }
+
+    const isReserved = await this.scheduleRepository.isReservedSchedule({
+      roomId: id,
+      endDay: endMomentDay,
+      startDay: startMomentDay
+    })
+
+    if (isReserved) {
+      throw new ScheduleException(ScheduleErrors.SCHEDULE_EXISTS.code)
+    }
+
+    return { startMomentDay, endMomentDay }
   }
 }

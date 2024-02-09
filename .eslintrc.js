@@ -21,8 +21,8 @@ module.exports = {
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
-    quotes: ['error', 'single'], // использовать одинарные кавычки
-    'comma-dangle': ['error', { // запятая после последнего элемента массива или объекта
+    quotes: ['error', 'single'],
+    'comma-dangle': ['error', {
       arrays: 'never',
       objects: 'never',
       imports: 'never',
@@ -30,13 +30,14 @@ module.exports = {
       functions: 'never',
     }],
     eqeqeq: 'error',
-    'no-multiple-empty-lines': 'error', // не больше 2 пустых строк подряд
+    'no-multiple-empty-lines': 'error',
+    'max-len': ['error', 250],
     '@typescript-eslint/no-unused-vars': [
       'warn',
       {
         varsIgnorePattern: '^_',
         argsIgnorePattern: '^_',
       },
-    ],// если в начале переменой стоит _ и она не используется, еслинт не будет ругаться
+    ],
   },
 };

@@ -9,6 +9,7 @@ import {
   Param,
   UsePipes,
   ValidationPipe,
+  UseFilters,
   UseGuards
 } from '@nestjs/common'
 
@@ -20,9 +21,11 @@ import {
 } from './dtos'
 
 import { RoomService } from './room.service'
+import { RoomExceptionFilter } from './exception'
 import { JwtAuthGuard } from '../auth/guards/jwt'
 import { UserEmail } from '../decorators/userEmail'
 
+@UseFilters(RoomExceptionFilter)
 @Controller('room')
 export class RoomController {
   constructor(private roomService: RoomService) {}
@@ -34,7 +37,7 @@ export class RoomController {
     @Param() dto: GetCurrentPageRoomDto,
     @UserEmail() _email: string
   ) {
-    return this.roomService.getRooms(Number(dto.page))
+    return this.roomService.getRooms(dto)
   }
 
   @UseGuards(JwtAuthGuard)

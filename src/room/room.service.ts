@@ -1,120 +1,58 @@
-import {
-  Body,
-  ConflictException,
-  Injectable,
-  NotFoundException
-} from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Room, RoomDocument } from './models'
-import { Model, Types } from 'mongoose'
-import { PostRoomDto, PatchRoomDto, GetCurrentRoomDto } from './dtos'
-import { Schedule, ScheduleDocument } from '../schedule/models'
-import { IRoomWithScheduleStatus } from './interfaces'
-import { ROOM_CONSTANTS } from './constants'
+import { Model } from 'mongoose'
+import { IRoomWithScheduleStatus } from './interfaces/reopository'
+import { RoomRepository } from './room.repository'
+import { RoomErrors, RoomException } from './exception'
+import { IGetRoom, ICreateRoom } from './interfaces/service'
+import { IGetCurrentPage } from './interfaces/service/get-current-page.interface'
+import { IRoomPatch } from './interfaces/service/patch-room.interface'
 
 @Injectable()
 export class RoomService {
   constructor(
     @InjectModel(Room.name) private roomModel: Model<RoomDocument>,
-    @InjectModel(Schedule.name) private scheduleModel: Model<ScheduleDocument>
+    private readonly roomRepository: RoomRepository
   ) {}
 
-  public async getRooms(
-    page: number,
-    pageSize: number = 250
-  ): Promise<IRoomWithScheduleStatus[]> {
-    const skipCount = (page - 1) * pageSize
-    const rooms = await this.roomModel.find().skip(skipCount).limit(pageSize)
-
-    return Promise.all(
-      rooms.map(async (room): Promise<IRoomWithScheduleStatus> => {
-        const isSchedule = await this.checkIfIdExistsOnDate(room._id)
-        return { ...room.toObject(), is_schedule: isSchedule }
-      })
-    )
+  public async getRooms({ page }: IGetCurrentPage) {
+    const currentDay = new Date().getDate()
+    const limit = 250
+    const offset = (+page - 1) * limit
+    return this.roomRepository.getRooms({ offset, currentDay, limit })
   }
 
-  public async getCurrentRoom(
-    room: GetCurrentRoomDto
-  ): Promise<IRoomWithScheduleStatus> {
-    const { id } = room
+  public async getCurrentRoom({ id }: IGetRoom) {
+    return this.ensureRoomExists(id)
+  }
+
+  public async deleteRoom({ id }: IGetRoom) {
     await this.ensureRoomExists(id)
+    const result = await this.roomRepository.deleteRoomById(id)
 
-    const findRoom = await this.roomModel.findOne({ _id: id })
-    const isSchedule = await this.checkIfIdExistsOnDate(findRoom._id)
-
-    return { ...findRoom.toObject(), is_schedule: isSchedule }
+    return { isDeleted: !!result.deletedCount }
   }
 
-  public async deleteRoom(room: GetCurrentRoomDto) {
-    const { id } = room
-    await this.ensureRoomExists(id)
-    await this.roomModel.deleteOne({ _id: id })
-    await this.scheduleModel.deleteMany({ room_id: id })
-    return { message: ROOM_CONSTANTS.ROOM_DELETED }
+  public async createRoom(room: ICreateRoom): Promise<IRoomWithScheduleStatus> {
+    const newRoom = await this.roomRepository.createRoom(room)
+    return { ...newRoom.toObject(), isSchedule: false }
   }
 
-  public async createRoom(room: PostRoomDto): Promise<IRoomWithScheduleStatus> {
-    await this.ensureRoomDoesNotExist(room.room_number)
+  public async patchRoom(room: IRoomPatch): Promise<IRoomWithScheduleStatus> {
+    await this.ensureRoomExists(room.id)
 
-    const newRoom = await this.roomModel.create({ ...room })
-    return { ...newRoom.toObject(), is_schedule: false }
+    const result = await this.roomRepository.patchRoom(room)
+
+    return { ...result.toObject(), isSchedule: false }
   }
 
-  public async patchRoom(
-    @Body() room: PatchRoomDto
-  ): Promise<IRoomWithScheduleStatus> {
-    const { id, room_number: _room_number, ...updateRoom } = room
-    await this.ensureRoomExists(id)
+  public async ensureRoomExists(id: string) {
+    const currentRoom = await this.roomRepository.getRoomById(id)
 
-    const result = await this.roomModel.findByIdAndUpdate(id, updateRoom, {
-      new: true
-    })
-    const isSchedule = await this.checkIfIdExistsOnDate(result._id)
-
-    return { ...result.toObject(), is_schedule: isSchedule }
-  }
-
-  public async searchRoomById(id: string): Promise<boolean> {
-    const findRoom = await this.roomModel.findById(id)
-
-    return !!findRoom
-  }
-
-  private async searchRoomByNumberRoom(roomNumber: number): Promise<boolean> {
-    const findRoom = await this.roomModel.findOne({
-      room_number: roomNumber
-    })
-
-    return !!findRoom
-  }
-
-  private async getCurrentDay(): Promise<number> {
-    return new Date().getDate()
-  }
-
-  private async checkIfIdExistsOnDate(_id: Types.ObjectId): Promise<boolean> {
-    const currentDay = await this.getCurrentDay()
-
-    const existingEntry = await this.scheduleModel.findOne({
-      room_id: _id,
-      day: currentDay
-    })
-
-    return !!existingEntry
-  }
-
-  public async ensureRoomExists(roomId: string) {
-    const roomExists = await this.searchRoomById(roomId)
-    if (!roomExists) {
-      throw new NotFoundException(ROOM_CONSTANTS.ROOM_NOT_FOUND)
+    if (!currentRoom) {
+      throw new RoomException(RoomErrors.ROOM_NOT_FOUND.code)
     }
-  }
-
-  private async ensureRoomDoesNotExist(roomNumber: number) {
-    const roomExists = await this.searchRoomByNumberRoom(roomNumber)
-    if (roomExists) {
-      throw new ConflictException(ROOM_CONSTANTS.ROOM_EXISTS)
-    }
+    return currentRoom.toObject()
   }
 }

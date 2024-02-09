@@ -3,16 +3,18 @@ import { HydratedDocument } from 'mongoose'
 
 export type RoomDocument = HydratedDocument<Room>
 
-@Schema({ versionKey: false })
+@Schema({
+  versionKey: false
+})
 export class Room {
-  @Prop({ required: true })
-  room_number: number
-  @Prop({ required: true })
-  room_type: string
-  @Prop({ required: true })
-  room_description: string
-  @Prop({ required: true })
-  is_sea_view: boolean
+  @Prop({ required: true, type: Number })
+  roomNumber: number
+  @Prop({ required: true, type: String })
+  roomType: string
+  @Prop({ required: true, type: String })
+  roomDescription: string
+  @Prop({ required: true, type: Boolean })
+  isSeaView: boolean
 }
 
 export const RoomSchema = SchemaFactory.createForClass(Room)

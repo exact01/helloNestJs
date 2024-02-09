@@ -15,8 +15,6 @@ import { AuthModule } from './auth/auth.module'
     ScheduleModule,
     RoomModule,
     AuthModule
-  ],
-  controllers: [],
-  providers: []
+  ]
 })
 export class AppModule {}
