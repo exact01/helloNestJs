@@ -5,12 +5,15 @@ import { AppModule } from '../../src/app.module'
 import { disconnect, Types } from 'mongoose'
 import { PatchRoomDto } from '../../src/room/dtos'
 import { roomTestDto } from './constants/roomTestDto'
+import { USER_1, USER_2 } from '../constants'
 
 describe('RoomController (e2e)', () => {
   let app: INestApplication
   let roomId: string
   const randomId = new Types.ObjectId().toString()
   const errorId = 'dfklsfjlkdSjdklsFjklFdsljkdsFjlkfsDljkFdsljkfsD'
+  let token: string
+  let token2: string
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -19,12 +22,37 @@ describe('RoomController (e2e)', () => {
 
     app = moduleFixture.createNestApplication()
     await app.init()
+
+    const { body } = await request(app.getHttpServer())
+      .post('/auth/sign-in')
+      .send({
+        email: USER_1.email,
+        password: USER_1.password
+      })
+    token = body.accessToken
+
+    const { body: body2 } = await request(app.getHttpServer())
+      .post('/auth/sign-in')
+      .send({
+        email: USER_2.email,
+        password: USER_2.password
+      })
+    token2 = body2.accessToken
   })
 
   describe('Default tests', () => {
+    it('/room (POST) 403', async () => {
+      await request(app.getHttpServer())
+        .post('/room')
+        .set('Authorization', 'Bearer ' + token)
+        .send(roomTestDto)
+        .expect(403)
+    })
+
     it('/room (POST) 201', async () => {
       const { body } = await request(app.getHttpServer())
         .post('/room')
+        .set('Authorization', 'Bearer ' + token2)
         .send(roomTestDto)
         .expect(201)
 
@@ -35,6 +63,7 @@ describe('RoomController (e2e)', () => {
     it('/room/current/:id (GET)', async () => {
       const { body } = await request(app.getHttpServer())
         .get(`/room/current/${roomId}`)
+        .set('Authorization', 'Bearer ' + token)
         .send(roomTestDto)
         .expect(200)
 
@@ -44,6 +73,7 @@ describe('RoomController (e2e)', () => {
     it('/room/current/:id (GET) 404', async () => {
       await request(app.getHttpServer())
         .get(`/room/current/${randomId}`)
+        .set('Authorization', 'Bearer ' + token)
         .send(roomTestDto)
         .expect(404)
     })
@@ -57,6 +87,7 @@ describe('RoomController (e2e)', () => {
 
       const { body } = await request(app.getHttpServer())
         .patch('/room')
+        .set('Authorization', 'Bearer ' + token2)
         .send(patchDto)
         .expect(200)
 
@@ -73,6 +104,7 @@ describe('RoomController (e2e)', () => {
 
       await request(app.getHttpServer())
         .patch('/room')
+        .set('Authorization', 'Bearer ' + token2)
         .send(patchDto)
         .expect(404)
     })
@@ -80,6 +112,7 @@ describe('RoomController (e2e)', () => {
     it('room/ (DELETE)', async () => {
       const { body } = await request(app.getHttpServer())
         .delete('/room')
+        .set('Authorization', 'Bearer ' + token2)
         .send({ id: roomId })
         .expect(200)
 
@@ -90,6 +123,7 @@ describe('RoomController (e2e)', () => {
     it('room/ (DELETE) 404', async () => {
       await request(app.getHttpServer())
         .delete('/room')
+        .set('Authorization', 'Bearer ' + token2)
         .send({ id: randomId })
         .expect(404)
     })
@@ -99,6 +133,7 @@ describe('RoomController (e2e)', () => {
     it('/room (POST) 400 validation error', async () => {
       await request(app.getHttpServer())
         .post('/room')
+        .set('Authorization', 'Bearer ' + token2)
         .send({ ...roomTestDto, isSeaView: 'random' })
         .expect(400)
     })
@@ -106,6 +141,7 @@ describe('RoomController (e2e)', () => {
     it('/room (POST) 400 validation error', async () => {
       await request(app.getHttpServer())
         .post('/room')
+        .set('Authorization', 'Bearer ' + token2)
         .send({ ...roomTestDto, roomNumber: 0 })
         .expect(400)
     })
@@ -113,35 +149,50 @@ describe('RoomController (e2e)', () => {
     it('/room (POST) 400 validation error', async () => {
       await request(app.getHttpServer())
         .post('/room')
+        .set('Authorization', 'Bearer ' + token2)
         .send({ ...roomTestDto, roomType: 'random' })
         .expect(400)
     })
 
     it('/room (GET) 400 validation error', async () => {
-      await request(app.getHttpServer()).get('/room/0').expect(400)
+      await request(app.getHttpServer())
+        .get('/room/0')
+        .set('Authorization', 'Bearer ' + token)
+        .expect(400)
     })
 
     it('/room (GET) 400 validation error', async () => {
-      await request(app.getHttpServer()).get('/room/0').expect(400)
+      await request(app.getHttpServer())
+        .get('/room/0')
+        .set('Authorization', 'Bearer ' + token)
+        .expect(400)
     })
 
     it('/room (GET) 400 validation error', async () => {
-      await request(app.getHttpServer()).get('/room/current/0').expect(400)
+      await request(app.getHttpServer())
+        .get('/room/current/0')
+        .set('Authorization', 'Bearer ' + token)
+        .expect(400)
     })
 
     it('/room (GET) 400 validation error', async () => {
-      await request(app.getHttpServer()).get(`/room/${errorId}`).expect(400)
+      await request(app.getHttpServer())
+        .get(`/room/${errorId}`)
+        .set('Authorization', 'Bearer ' + token)
+        .expect(400)
     })
 
     it('/room (GET) 400 validation error', async () => {
       await request(app.getHttpServer())
         .get(`/room/current/${errorId}`)
+        .set('Authorization', 'Bearer ' + token)
         .expect(400)
     })
 
     it('/room (PATCH) 400 validation error', async () => {
       await request(app.getHttpServer())
         .patch('/room')
+        .set('Authorization', 'Bearer ' + token2)
         .send({ ...roomTestDto, id: 0 })
         .expect(400)
     })
@@ -149,6 +200,7 @@ describe('RoomController (e2e)', () => {
     it('room/ (DELETE) 400 validation error', async () => {
       await request(app.getHttpServer())
         .delete('/room')
+        .set('Authorization', 'Bearer ' + token2)
         .send({ id: 0 })
         .expect(400)
     })

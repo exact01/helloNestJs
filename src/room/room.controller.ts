@@ -21,49 +21,49 @@ import {
 } from './dtos'
 
 import { RoomService } from './room.service'
-import { RoomExceptionFilter } from './exception'
-import { JwtAuthGuard } from '../auth/guards/jwt'
-import { UserEmail } from '../decorators/userEmail'
-
-@UseFilters(RoomExceptionFilter)
+import { JwtAuthGuard } from '../common/guards/jwt'
+import { UserDataDecorator } from '../common/decorators/userData'
+import { HttpExceptionFilter } from '../common/utils/filters/exceptions/http-exception-filter'
+import { Role, Roles } from '../common/decorators/roles'
+import { RolesGuard } from '../common/guards/roles'
+@UseGuards(JwtAuthGuard, RolesGuard)
+@UseFilters(HttpExceptionFilter)
 @Controller('room')
 export class RoomController {
   constructor(private roomService: RoomService) {}
 
-  @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @Get('/:page')
   public async getRooms(
     @Param() dto: GetCurrentPageRoomDto,
-    @UserEmail() _email: string
+    @UserDataDecorator() _email: string
   ) {
     return this.roomService.getRooms(dto)
   }
 
-  @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @Get('/current/:id')
   public async getCurrentRoom(@Param() dto: GetCurrentRoomDto) {
     return this.roomService.getCurrentRoom(dto)
   }
 
-  @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
+  @Roles(Role.ADMIN)
   @HttpCode(201)
   @Post()
   public async createRoom(@Body() dto: PostRoomDto) {
     return this.roomService.createRoom(dto)
   }
 
-  @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
+  @Roles(Role.ADMIN)
   @Patch()
   public async patchRoom(@Body() dto: PatchRoomDto) {
     return this.roomService.patchRoom(dto)
   }
 
-  @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
+  @Roles(Role.ADMIN)
   @Delete()
   public async deleteRoom(@Body() dto: GetCurrentRoomDto) {
     return this.roomService.deleteRoom(dto)

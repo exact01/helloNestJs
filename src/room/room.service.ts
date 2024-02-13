@@ -4,10 +4,11 @@ import { Room, RoomDocument } from './models'
 import { Model } from 'mongoose'
 import { IRoomWithScheduleStatus } from './interfaces/reopository'
 import { RoomRepository } from './room.repository'
-import { RoomErrors, RoomException } from './exception'
+import { RoomErrors } from './constants/errors'
 import { IGetRoom, ICreateRoom } from './interfaces/service'
 import { IGetCurrentPage } from './interfaces/service/get-current-page.interface'
 import { IRoomPatch } from './interfaces/service/patch-room.interface'
+import { AppException } from '../common/utils/filters/exceptions/app-exception'
 
 @Injectable()
 export class RoomService {
@@ -36,7 +37,7 @@ export class RoomService {
 
   public async createRoom(room: ICreateRoom): Promise<IRoomWithScheduleStatus> {
     const newRoom = await this.roomRepository.createRoom(room)
-    return { ...newRoom.toObject(), isSchedule: false }
+    return newRoom.toObject()
   }
 
   public async patchRoom(room: IRoomPatch): Promise<IRoomWithScheduleStatus> {
@@ -44,14 +45,14 @@ export class RoomService {
 
     const result = await this.roomRepository.patchRoom(room)
 
-    return { ...result.toObject(), isSchedule: false }
+    return result.toObject()
   }
 
   public async ensureRoomExists(id: string) {
     const currentRoom = await this.roomRepository.getRoomById(id)
 
     if (!currentRoom) {
-      throw new RoomException(RoomErrors.ROOM_NOT_FOUND.code)
+      throw new AppException(RoomErrors.ROOM_NOT_FOUND)
     }
     return currentRoom.toObject()
   }

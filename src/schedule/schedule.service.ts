@@ -6,14 +6,15 @@ import {
   IGetSchedule,
   IPatchSchedule
 } from './interfeces/service'
-import { ScheduleExceptionFilter } from './exeption/shcedule.exption.filter'
 import { ScheduleRepository } from './schedule.repository'
-import { ScheduleException } from './exeption'
-import { ScheduleErrors } from './exeption/errors'
+
+import { ScheduleErrors } from './constants/errors'
 import moment from 'moment-timezone'
 import { RoomService } from '../room/room.service'
+import { HttpExceptionFilter } from '../common/utils/filters/exceptions/http-exception-filter'
+import { AppException } from '../common/utils/filters/exceptions/app-exception'
 
-@UseFilters(ScheduleExceptionFilter)
+@UseFilters(HttpExceptionFilter)
 @Injectable()
 export class ScheduleService {
   constructor(
@@ -70,7 +71,7 @@ export class ScheduleService {
   private async searchScheduleById(id: string) {
     const schedule = await this.scheduleRepository.getByScheduleId(id)
     if (!schedule) {
-      throw new ScheduleException(ScheduleErrors.SCHEDULE_NOT_FOUND.code)
+      throw new AppException(ScheduleErrors.SCHEDULE_NOT_FOUND)
     }
     return schedule
   }
@@ -80,7 +81,7 @@ export class ScheduleService {
     const endMomentDay = moment.utc(endDay).startOf('day')
 
     if (startMomentDay.isAfter(endMomentDay)) {
-      throw new ScheduleException(ScheduleErrors.SCHEDULE_VALIDATION_DAY.code)
+      throw new AppException(ScheduleErrors.SCHEDULE_VALIDATION_DAY)
     }
 
     const isReserved = await this.scheduleRepository.isReservedSchedule({
@@ -90,7 +91,7 @@ export class ScheduleService {
     })
 
     if (isReserved) {
-      throw new ScheduleException(ScheduleErrors.SCHEDULE_EXISTS.code)
+      throw new AppException(ScheduleErrors.SCHEDULE_EXISTS)
     }
 
     return { startMomentDay, endMomentDay }

@@ -3,8 +3,11 @@ import { ConfigModule } from '@nestjs/config'
 import { MongooseModule } from '@nestjs/mongoose'
 import { ScheduleModule } from './schedule/schedule.module'
 import { RoomModule } from './room/room.module'
-import { MongooseConfigService } from './configs/mongooseConfig/mongooseConfig.service'
+import { MongooseConfigService } from './common/configs/mongooseConfig/mongooseConfig.service'
 import { AuthModule } from './auth/auth.module'
+import { UsersModule } from './users/users.module'
+import { APP_FILTER } from '@nestjs/core'
+import { HttpExceptionFilter } from './common/utils/filters/exceptions/http-exception-filter'
 
 @Module({
   imports: [
@@ -14,7 +17,14 @@ import { AuthModule } from './auth/auth.module'
     }),
     ScheduleModule,
     RoomModule,
-    AuthModule
+    AuthModule,
+    UsersModule
+  ],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter
+    }
   ]
 })
 export class AppModule {}

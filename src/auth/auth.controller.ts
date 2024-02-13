@@ -1,6 +1,5 @@
 import {
   Body,
-  ConflictException,
   Controller,
   Post,
   UsePipes,
@@ -9,29 +8,19 @@ import {
 import { RegisterDto } from './dtos'
 import { LoginDto } from './dtos/loginDto'
 import { AuthService } from './auth.service'
-import { AUTH_CONSTANTS } from './constants'
-import { UsersService } from '../users/users.service'
-@Controller('auth')
-export class AuthController {
-  constructor(
-    private authService: AuthService,
-    private userService: UsersService
-  ) {}
-  @UsePipes(new ValidationPipe())
-  @Post('signUp')
-  public async signUp(@Body() dto: RegisterDto) {
-    const isUser = await this.userService.findUser(dto.email)
-    if (isUser) {
-      throw new ConflictException(AUTH_CONSTANTS.USER_EXISTS)
-    }
 
+@Controller('auth')
+@UsePipes(new ValidationPipe())
+export class AuthController {
+  constructor(private authService: AuthService) {}
+
+  @Post('sign-up')
+  public async signUp(@Body() dto: RegisterDto) {
     return this.authService.signUp(dto)
   }
 
-  @UsePipes(new ValidationPipe())
-  @Post('signIn')
-  public async signIn(@Body() { email, password }: LoginDto) {
-    const user = await this.userService.validateUser(email, password)
-    return this.authService.signIn(user)
+  @Post('sign-in')
+  public async signIn(@Body() dto: LoginDto) {
+    return this.authService.signIn(dto)
   }
 }

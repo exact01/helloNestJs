@@ -18,10 +18,9 @@ import {
   PostScheduleDto
 } from './dtos'
 import { ScheduleService } from './schedule.service'
-import { ScheduleExceptionFilter } from './exeption/shcedule.exption.filter'
-import { RoomExceptionFilter } from '../room/exception'
+import { HttpExceptionFilter } from '../common/utils/filters/exceptions/http-exception-filter'
 
-@UseFilters(RoomExceptionFilter, ScheduleExceptionFilter)
+@UseFilters(HttpExceptionFilter)
 @Controller('schedule')
 export class ScheduleController {
   constructor(private scheduleService: ScheduleService) {}

@@ -1,7 +1,14 @@
-import { IsString, MaxLength, MinLength } from 'class-validator'
-import { LoginDto } from './loginDto'
+import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator'
 
-export class RegisterDto extends LoginDto {
+export class RegisterDto {
+  @IsEmail()
+  email: string
+
+  @IsString()
+  @MaxLength(64)
+  @MinLength(8)
+  password: string
+
   @IsString()
   @MaxLength(64)
   @MinLength(3)

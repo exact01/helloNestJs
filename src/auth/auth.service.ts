@@ -1,45 +1,42 @@
 import { Injectable } from '@nestjs/common'
-import { RegisterDto } from './dtos'
-import { LoginDto } from './dtos/loginDto'
-import { User, UserDocument } from '../users/models'
-import { Model } from 'mongoose'
-import { InjectModel } from '@nestjs/mongoose'
-import { genSalt, hash } from 'bcryptjs'
-import { ConfigService } from '@nestjs/config'
 import { UsersService } from '../users/users.service'
 import { JwtService } from '@nestjs/jwt'
+import { IAuthResponse, ISignIn, ISignUp } from './interfaces'
+import { UsersRepository } from '../users/users.repository'
+
 @Injectable()
 export class AuthService {
-  protected readonly salt: number
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
-    private configService: ConfigService,
-    private userService: UsersService,
+    private readonly userService: UsersService,
+    private readonly userRepository: UsersRepository,
     private jwtService: JwtService
-  ) {
-    this.salt = Number(configService.get<string>('SALT').trim())
-  }
+  ) {}
 
-  public async signIn({ email }: Pick<LoginDto, 'email'>) {
-    const payload = { email }
-    return { access_token: await this.jwtService.signAsync(payload) }
+  public async signIn({ email, password }: ISignIn): Promise<IAuthResponse> {
+    const user = await this.userService.validateUser(email, password)
+    const payload = { email: user.email, role: user.role }
+
+    return { accessToken: await this.jwtService.signAsync(payload) }
   }
 
   public async signUp({
     login,
-    password: pass,
+    password,
     phone,
     email
-  }: RegisterDto): Promise<any> {
-    const salt = await genSalt(this.salt)
-    const newUser = new this.userModel({
-      email,
-      hashPassword: await hash(pass, salt),
-      phone,
+  }: ISignUp): Promise<IAuthResponse> {
+    const payload = await this.userService.createUser({
       login,
-      role: 'user'
+      password,
+      phone,
+      email
     })
 
-    return newUser.save()
+    return {
+      accessToken: await this.jwtService.signAsync({
+        email: payload.email,
+        role: payload.role
+      })
+    }
   }
 }

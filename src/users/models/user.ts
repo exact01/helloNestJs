@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { HydratedDocument } from 'mongoose'
-import { TRole } from '../types/roles'
+import { TKeyRole } from '../../common/decorators/roles/role'
 
 export type UserDocument = HydratedDocument<User>
 
@@ -19,7 +19,7 @@ export class User {
   phone: string
 
   @Prop({ required: true })
-  role: TRole
+  role: TKeyRole
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)
