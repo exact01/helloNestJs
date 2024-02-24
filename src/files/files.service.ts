@@ -13,7 +13,8 @@ export class FilesService {
     await ensureDir(uploadFolder)
     const res: FileElementResponse[] = []
     for (const file of files) {
-      await writeFile(`${uploadFolder}/${file.originalname}`, file.buffer)
+      const fileBuffer = await sharp(file.buffer).resize(500).toBuffer()
+      await writeFile(`${uploadFolder}/${file.originalname}`, fileBuffer)
       res.push({
         url: `${dateFolder}/${file.originalname}`,
         name: file.originalname

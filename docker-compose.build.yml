@@ -3,7 +3,7 @@ version: "3.9"
 # проверьте наличие .env файла!
 # 1. docker compose --env-file .env  docker-compose.build.yml up -d
 # 2. docker tag yourDockerImage ....
-# 3. docker push yourRegistery
+# 3. docker push yourRegister
 services:
   helloNestJsApi:
     env_file:
