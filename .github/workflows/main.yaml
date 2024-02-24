@@ -1,17 +1,17 @@
-  name: Publish Docker
-  on:
-    push:
-      branches: [4-production, master ]
-  jobs:
-    build:
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@master
-        - name: Publish to registry
-          uses: elgohr/Publish-Docker-Github-Action@v5
-          with:
-            registry: docker.pkg.github.com
-            name: docker.pkg.github.com/exact01/helloNestJs
-            username: ${{ secrets.DOCKER_USERNAME }}
-            password: ${{ secrets.DOCKER_PASSWORD }}
-            tags: "develop"
+name: Publish Docker
+on:
+  push:
+    branches: [4-production, master]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Publish to registry
+        uses: elgohr/Publish-Docker-Github-Action@v5
+        with:
+          registry: ghcr.io
+          name: ghcr.io/exact01/helloNestJs/my-app
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          tags: "latest,${{ github.sha }}"
