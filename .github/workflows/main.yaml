@@ -1,7 +1,7 @@
   name: Publish Docker
   on:
     push:
-      branches: [4-production, master ]
+      branches: [ master ]
   jobs:
     build:
       runs-on: ubuntu-latest
