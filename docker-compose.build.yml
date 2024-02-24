@@ -10,7 +10,7 @@ services:
       - .env
     container_name: helloNestJsApi
     build:
-      dockerfile: DockerFile
+      dockerfile: Dockerfile
     ports:
       - "3000:${PROCESS_PORT}"
   mongodb:
