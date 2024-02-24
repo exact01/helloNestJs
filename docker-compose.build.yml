@@ -1,0 +1,35 @@
+version: "3.9"
+# docker-compose предназначен для сборки!
+# 1. docker compose --env-file .env  docker-compose.build.yml up -d
+# 2. docker tag yourDockerImages ....
+# 3. docker push yourRegistery
+services:
+  top.api:
+    container_name: top-api
+    build:
+      dockerfile: DockerFile
+    ports:
+      - "127.0.0.1:3000:3000"
+    env_file:
+      - .env
+  mongodb:
+    image: mongo:latest
+    container_name: mongoDb
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:27017:${MONGO_INITDB_ROOT_PORT}"
+    volumes:
+      - ./mongoData:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - TZ=Europe/Moscow
+    networks:
+      - awesome
+
+networks:
+  awesome:
+    driver: bridge
