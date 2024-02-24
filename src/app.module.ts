@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module'
 import { UsersModule } from './users/users.module'
 import { APP_FILTER } from '@nestjs/core'
 import { HttpExceptionFilter } from './common/utils/filters/exceptions/http-exception-filter'
+import { StatisticModule } from './statistic/statistic.module'
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { HttpExceptionFilter } from './common/utils/filters/exceptions/http-exce
     ScheduleModule,
     RoomModule,
     AuthModule,
-    UsersModule
+    UsersModule,
+    StatisticModule
   ],
   providers: [
     {
