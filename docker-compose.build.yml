@@ -1,17 +1,18 @@
 version: "3.9"
 # docker-compose предназначен для сборки!
+# проверьте наличие .env файла!
 # 1. docker compose --env-file .env  docker-compose.build.yml up -d
-# 2. docker tag yourDockerImages ....
+# 2. docker tag yourDockerImage ....
 # 3. docker push yourRegistery
 services:
-  top.api:
-    container_name: top-api
+  helloNestJsApi:
+    env_file:
+      - .env
+    container_name: helloNestJsApi
     build:
       dockerfile: DockerFile
     ports:
-      - "127.0.0.1:3000:3000"
-    env_file:
-      - .env
+      - "3000:${PROCESS_PORT}"
   mongodb:
     image: mongo:latest
     container_name: mongoDb

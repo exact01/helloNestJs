@@ -1,13 +1,13 @@
   name: Publish Docker
   on:
     push:
-      branches: [master]
+      branches: [4-production, master ]
   jobs:
     build:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@master
-        - name: Publish to registery
+        - name: Publish to registry
           uses: elgohr/Publish-Docker-Github-Action@v5
           with:
             registry: docker.pkg.github.com
