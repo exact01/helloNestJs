@@ -13,13 +13,16 @@ import moment from 'moment-timezone'
 import { RoomService } from '../room/room.service'
 import { HttpExceptionFilter } from '../common/utils/filters/exceptions/http-exception-filter'
 import { AppException } from '../common/utils/filters/exceptions/app-exception'
+import { TelegramService } from '../telegram/telegram.service'
+import { formatDate, formatDateString } from '../common/utils/formateDate'
 
 @UseFilters(HttpExceptionFilter)
 @Injectable()
 export class ScheduleService {
   constructor(
     private readonly scheduleRepository: ScheduleRepository,
-    private readonly roomService: RoomService
+    private readonly roomService: RoomService,
+    private readonly telegramService: TelegramService
   ) {}
 
   public async getScheduleById({ id }: IGetSchedule) {
@@ -30,8 +33,13 @@ export class ScheduleService {
     return this.scheduleRepository.getSchedule()
   }
 
-  public async createSchedule({ startDay, endDay, roomId }: ICreateSchedule) {
-    await this.roomService.ensureRoomExists(roomId)
+  public async createSchedule({
+    startDay,
+    endDay,
+    roomId,
+    user
+  }: ICreateSchedule) {
+    const room = await this.roomService.ensureRoomExists(roomId)
 
     const { startMomentDay, endMomentDay } = await this.ensureGoodTime({
       id: roomId,
@@ -39,16 +47,37 @@ export class ScheduleService {
       startDay
     })
 
-    return this.scheduleRepository.createSchedule({
+    const newSchedule = await this.scheduleRepository.createSchedule({
       startDay: startMomentDay.toString(),
       endDay: endMomentDay.toString(),
-      roomId
+      roomId,
+      user
     })
+
+    // здесь можно было бы применить cqrs архитектуру и ловить евент через SAGA, однако я не стал этого делать!
+    const telegramMessage = `🔗 Резерв комнаты: <b> ${room.roomNumber} </b>
+📧 Зарезервировал: <b>${newSchedule.email}</b>
+📆 Дата заезда: <b>${formatDateString(startDay)}</b>
+📅 Дата отъезда: <b>${formatDateString(endDay)}</b>`
+    await this.telegramService.sendMessage(telegramMessage)
+
+    return newSchedule
   }
 
   public async deleteSchedule({ id }: IDeleteSchedule) {
     const scheduleDb = await this.searchScheduleById(id)
     await scheduleDb.deleteOne()
+    const room = await this.roomService.getCurrentRoom({
+      id: `${scheduleDb.roomId}`
+    })
+
+    // здесь можно было бы применить cqrs архитектуру и ловить евент через SAGA, однако я не стал этого делать!
+    const telegramMessage = `🔗 Отмена резерва комнаты: <b>${room.roomNumber}</b>
+📧 Кто резервировал: <b>${scheduleDb.email}</b>
+📆 Дата заезда: <b>${formatDate(scheduleDb.startDay)}</b>
+📅 Дата отъезда: <b>${formatDate(scheduleDb.endDay)}</b>`
+    await this.telegramService.sendMessage(telegramMessage)
+
     return { isDeleted: true }
   }
 
@@ -68,7 +97,7 @@ export class ScheduleService {
     })
   }
 
-  private async searchScheduleById(id: string) {
+  public async searchScheduleById(id: string) {
     const schedule = await this.scheduleRepository.getByScheduleId(id)
     if (!schedule) {
       throw new AppException(ScheduleErrors.SCHEDULE_NOT_FOUND)

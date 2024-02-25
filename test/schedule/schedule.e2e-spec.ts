@@ -154,7 +154,10 @@ describe('ScheduleController (e2e)', () => {
 
   describe('Validation errors', () => {
     it('/schedule/:id (GET) 400 validation error', async () => {
-      await request(app.getHttpServer()).get('/schedule/0').expect(400)
+      await request(app.getHttpServer())
+        .get('/schedule/0')
+        .set('Authorization', 'Bearer ' + token)
+        .expect(400)
     })
 
     it('schedule/ (POST) 400 validation error', async () => {

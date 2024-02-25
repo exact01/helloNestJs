@@ -12,5 +12,9 @@ export const ScheduleErrors = {
   SCHEDULE_VALIDATION_DAY: {
     message: 'StartDay must be before or equal to endDay',
     status: HttpStatus.BAD_REQUEST
+  },
+  SCHEDULE_FORBIDDEN_EMAIL: {
+    message: 'Access is denied',
+    status: HttpStatus.FORBIDDEN
   }
 } as const
