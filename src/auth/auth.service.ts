@@ -2,13 +2,11 @@ import { Injectable } from '@nestjs/common'
 import { UsersService } from '../users/users.service'
 import { JwtService } from '@nestjs/jwt'
 import { IAuthResponse, ISignIn, ISignUp } from './interfaces'
-import { UsersRepository } from '../users/users.repository'
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UsersService,
-    private readonly userRepository: UsersRepository,
     private jwtService: JwtService
   ) {}
 

@@ -1,3 +1,3 @@
-import { RegisterDto } from './registerDto'
+import { RegisterDto } from './register.dto'
 
 export { RegisterDto }
