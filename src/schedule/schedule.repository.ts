@@ -31,8 +31,18 @@ export class ScheduleRepository {
 
     return !!overlappingReservation
   }
-  public async createSchedule({ startDay, endDay, roomId }: ICreateSchedule) {
-    return this.scheduleModel.create({ startDay, endDay, roomId })
+  public async createSchedule({
+    startDay,
+    endDay,
+    roomId,
+    user
+  }: ICreateSchedule) {
+    return this.scheduleModel.create({
+      startDay,
+      endDay,
+      roomId,
+      email: user.email
+    })
   }
 
   public async getSchedule() {

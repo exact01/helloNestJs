@@ -9,7 +9,8 @@ import {
   Param,
   UsePipes,
   ValidationPipe,
-  UseFilters
+  UseFilters,
+  UseGuards
 } from '@nestjs/common'
 
 import {
@@ -20,15 +21,23 @@ import {
 } from './dtos'
 
 import { RoomService } from './room.service'
-import { RoomExceptionFilter } from './exception'
-
-@UseFilters(RoomExceptionFilter)
+import { JwtAuthGuard } from '../common/guards/jwt'
+import { UserDataDecorator } from '../common/decorators/userData'
+import { HttpExceptionFilter } from '../common/utils/filters/exceptions/http-exception-filter'
+import { Role, Roles } from '../common/decorators/roles'
+import { RolesGuard } from '../common/guards/roles'
+@UseGuards(JwtAuthGuard, RolesGuard)
+@UseFilters(HttpExceptionFilter)
 @Controller('room')
 export class RoomController {
   constructor(private roomService: RoomService) {}
+
   @UsePipes(new ValidationPipe())
   @Get('/:page')
-  public async getRooms(@Param() dto: GetCurrentPageRoomDto) {
+  public async getRooms(
+    @Param() dto: GetCurrentPageRoomDto,
+    @UserDataDecorator() _email: string
+  ) {
     return this.roomService.getRooms(dto)
   }
 
@@ -39,18 +48,22 @@ export class RoomController {
   }
 
   @UsePipes(new ValidationPipe())
+  @Roles(Role.ADMIN)
   @HttpCode(201)
   @Post()
   public async createRoom(@Body() dto: PostRoomDto) {
     return this.roomService.createRoom(dto)
   }
+
   @UsePipes(new ValidationPipe())
+  @Roles(Role.ADMIN)
   @Patch()
   public async patchRoom(@Body() dto: PatchRoomDto) {
     return this.roomService.patchRoom(dto)
   }
 
   @UsePipes(new ValidationPipe())
+  @Roles(Role.ADMIN)
   @Delete()
   public async deleteRoom(@Body() dto: GetCurrentRoomDto) {
     return this.roomService.deleteRoom(dto)

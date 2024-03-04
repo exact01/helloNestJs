@@ -1,0 +1,36 @@
+version: "3.9"
+# docker-compose предназначен для сборки!
+# проверьте наличие .env файла!
+# 1. docker compose --env-file .env  docker-compose.build.yml up -d
+# 2. docker tag yourDockerImage ....
+# 3. docker push yourRegister
+services:
+  helloNestJsApi:
+    env_file:
+      - .env
+    container_name: helloNestJsApi
+    build:
+      dockerfile: Dockerfile
+    ports:
+      - "3000:${PROCESS_PORT}"
+  mongodb:
+    image: mongo:latest
+    container_name: mongoDb
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:27017:${MONGO_INITDB_ROOT_PORT}"
+    volumes:
+      - ./mongoData:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - TZ=Europe/Moscow
+    networks:
+      - awesome
+
+networks:
+  awesome:
+    driver: bridge
